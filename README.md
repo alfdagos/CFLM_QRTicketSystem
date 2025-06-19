@@ -1,4 +1,4 @@
-# QR Ticket System
+# CFLM QR Ticket System
 
 Questo progetto è un sistema di gestione di biglietti per le feste gasanti del CFLM basato su **QR Code**, realizzato con **Java Spring Boot** per il backend e **PostgreSQL** come database. Offre funzionalità complete per la generazione, visualizzazione e verifica dei biglietti, rendendolo ideale per eventi, conferenze o qualsiasi scenario che richieda un sistema di ingresso con validazione.
 
