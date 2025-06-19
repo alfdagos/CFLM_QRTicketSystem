@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifica Biglietti (Reception)</title>
+    <!-- Libreria per la scansione QR Code lato client -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .password-prompt {
+            margin-bottom: 30px;
+        }
+        .password-prompt label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #555;
+        }
+        .password-prompt input[type="password"] {
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 1em;
+            width: 250px;
+            margin-right: 10px;
+        }
+        .password-prompt button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        .password-prompt button:hover {
+            background-color: #218838;
+        }
+        #password-message {
+            color: red;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        #scanner-container {
+            display: none; /* Inizialmente nascosto */
+        }
+        #qr-reader {
+            width: 100%;
+            max-width: 400px; /* Limita la larghezza del lettore QR */
+            margin: 0 auto 20px auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .result-message {
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .valid-msg {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .invalid-msg {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .back-link {
+            margin-top: 30px;
+            display: inline-block;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .back-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Verifica Biglietti (Reception)</h1>
+
+    <div th:if="${passwordRequired}" class="password-prompt" id="passwordPromptDiv">
+        <label for="password">Inserisci la password:</label>
+        <input type="password" id="password" required>
+        <button onclick="checkPassword()">Accedi</button>
+        <p id="password-message"></p>
+    </div>
+
+    <div id="scanner-container">
+        <div id="qr-reader"></div>
+        <div id="qr-reader-results" class="result-message"></div>
+    </div>
+
+    <a href="/" class="back-link">Torna alla pagina principale</a>
+</div>
+
+<script>
+    const ACCESS_PASSWORD = "admin"; // In un'applicazione reale, usa un sistema di autenticazione robusto!
+    let html5QrCode;
+
+    function checkPassword() {
+        const enteredPassword = document.getElementById('password').value;
+        if (enteredPassword === ACCESS_PASSWORD) {
+            document.getElementById('passwordPromptDiv').style.display = 'none';
+            document.getElementById('scanner-container').style.display = 'block';
+            startQrScanner();
+        } else {
+            document.getElementById('password-message').innerText = 'Password errata!';
+        }
+    }
+
+    function startQrScanner() {
+        html5QrCode = new Html5Qrcode("qr-reader");
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+            console.log(`QR Code scansionato: ${decodedText}`);
+            document.getElementById('qr-reader-results').innerText = 'Scansionato: ' + decodedText + ' - Verifica in corso...';
+
+            // Chiama l'API di backend per verificare il biglietto
+            // Il decodedText è il qrCodeData, che è l'UUID del biglietto
+            fetch(`/reception/verify/${decodedText}`, {
+                method: 'POST'
+            })
+            .then(response => {
+                // Controlla se la risposta è un reindirizzamento (status 3xx)
+                if (response.redirected) {
+                    window.location.href = response.url; // Segui il reindirizzamento
+                    return; // Ferma l'esecuzione del .then()
+                }
+                // Se non è un reindirizzamento e non è ok (es. 4xx, 5xx), gestisci l'errore
+                if (!response.ok) {
+                    return response.text().then(text => Promise.reject(text));
+                }
+                // Questo caso non dovrebbe accadere con il reindirizzamento, ma per sicurezza:
+                return response.text();
+            })
+            .then(message => {
+                // Questo blocco verrà eseguito solo se non c'è stato un reindirizzamento e la risposta è OK
+                document.getElementById('qr-reader-results').innerHTML = `<span class="valid-msg">${message}</span>`;
+            })
+            .catch(error => {
+                document.getElementById('qr-reader-results').innerHTML = `<span class="invalid-msg">${error}</span>`;
+            })
+            .finally(() => {
+                // Dopo la verifica, puoi scegliere se fermare lo scanner o farlo continuare.
+                // Attualmente, continua a scansionare. Se vuoi fermarlo:
+                html5QrCode.stop().then(ignore => { /* stopped */ }).catch(err => console.error("Error stopping scanner:", err));
+            });
+        };
+
+        const config = {
+            fps: 10, // Frame per secondo per la scansione
+            qrbox: { width: 250, height: 250 }, // Dimensioni della scatola di scansione
+            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+        };
+
+        // Avvia la scansione dalla fotocamera frontale (user) o posteriore (environment)
+        html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+            .catch(err => {
+                document.getElementById('qr-reader-results').innerText = 'Errore nell\'avvio dello scanner QR: ' + err;
+                console.error("Errore nell'avvio dello scanner QR:", err);
+            });
+    }
+
+    // Se la password non è richiesta (es. dopo l'autenticazione in un'app più complessa), avvia direttamente lo scanner
+    if (!document.getElementById('passwordPromptDiv')) {
+        startQrScanner();
+    }
+</script>
+</body>
+</html>
