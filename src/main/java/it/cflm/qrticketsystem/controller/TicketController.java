@@ -33,7 +33,7 @@ public class TicketController {
     @GetMapping("/")
     public String index(Model model) {
         // Puoi aggiungere qui dati dinamici per il poster dell'evento o altre informazioni
-        model.addAttribute("eventName", "Il mio grande evento!");
+        model.addAttribute("eventName", "Non succederà più! CFLM 2025 Party");
         return "index"; // Riferimento a src/main/resources/templates/index.html
     }
 
