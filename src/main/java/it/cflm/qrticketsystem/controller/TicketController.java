@@ -3,6 +3,10 @@ package it.cflm.qrticketsystem.controller;
 import it.cflm.qrticketsystem.model.Ticket;
 import it.cflm.qrticketsystem.service.TicketService;
 import com.google.zxing.WriterException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,6 +23,7 @@ import java.util.UUID;
  */
 @Controller
 @RequestMapping("/")
+@Tag(name = "Ticket Controller", description = "Gestione dei biglietti e QR Code")
 public class TicketController {
 
     @Autowired
@@ -46,6 +51,11 @@ public class TicketController {
      * @param userEmail L'email dell'utente.
      * @return ResponseEntity contenente il biglietto creato o un messaggio di errore.
      */
+    @Operation(summary = "Crea un nuovo biglietto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Biglietto creato con successo"),
+            @ApiResponse(responseCode = "500", description = "Errore nella creazione del biglietto")
+    })
     @PostMapping("/tickets")
     public ResponseEntity<Ticket> createTicket(@RequestParam String eventName,
                                              @RequestParam String userName,
@@ -91,6 +101,11 @@ public class TicketController {
      * @param ticketId L'UUID del biglietto.
      * @return ResponseEntity contenente l'immagine PNG del QR Code o un 404.
      */
+    @Operation(summary = "Ottieni l'immagine PNG del QR Code di un biglietto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "QR Code trovato"),
+            @ApiResponse(responseCode = "404", description = "Biglietto non trovato")
+    })
     @GetMapping(value = "/qrcode/{ticketId}", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> getQrCodeImage(@PathVariable UUID ticketId) {
         return ticketService.getTicketById(ticketId)
@@ -118,6 +133,11 @@ public class TicketController {
      * @param ticketId L'UUID del biglietto da verificare.
      * @return ResponseEntity contenente un messaggio di stato (valido/non valido).
      */
+    @Operation(summary = "Verifica un biglietto tramite il suo ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Biglietto valido"),
+            @ApiResponse(responseCode = "400", description = "Biglietto non valido o già usato")
+    })
     @PostMapping("/reception/verify/{ticketId}")
     public ResponseEntity<String> verifyTicket(@PathVariable UUID ticketId) {
         // Questa API dovrebbe essere protetta in un'applicazione reale (es. con un token JWT)
