@@ -14,8 +14,9 @@ Sistema di gestione biglietti per eventi CFLM basato su **QR Code**, realizzato 
 * 🔒 **Validazione Input** con Bean Validation
 * 🚨 **Gestione Errori Centralizzata**
 * 📝 **Logging Strutturato**
-* 🧪 **Test Unitari** con JUnit 5 e Mockito
-* 🎨 **UI Responsive** con Thymeleaf
+* 🧪 **Test Coverage Completo** - 66 test con JUnit 5, Mockito e AssertJ
+* 🎨 **UI Responsive** con Thymeleaf e poster SVG personalizzato
+* 🎯 **Architettura Pulita** con pattern DTO, Mapper e Service Layer
 
 ## 🏗️ Architettura
 
@@ -37,7 +38,7 @@ Il progetto segue un'architettura a livelli ben strutturata:
 
 ### Backend:
 * **Java 21**
-* **Spring Boot 3.3.1**
+* **Spring Boot 3.5.7**
   - Spring Web
   - Spring Data JPA
   - Spring Validation
@@ -52,10 +53,12 @@ Il progetto segue un'architettura a livelli ben strutturata:
 * **HTML5-QRCode** - Scanner QR lato browser
 
 ### Testing & Documentation:
-* **JUnit 5** - Testing framework
-* **Mockito** - Mocking framework
+* **JUnit 5 Jupiter** - Testing framework
+* **Mockito** - Mocking framework con @MockBean
 * **AssertJ** - Fluent assertions
-* **SpringDoc OpenAPI** - Documentazione API
+* **Spring Boot Test** - Testing utilities (@WebMvcTest, @DataJpaTest)
+* **Jakarta Bean Validation** - DTO validation testing
+* **SpringDoc OpenAPI** - Documentazione API automatica
 
 ## ⚙️ Prerequisiti
 
@@ -150,18 +153,99 @@ Per visualizzare il database in memoria:
 
 ## 🧪 Testing
 
+Il progetto include una **suite completa di 66 test** che coprono tutti i livelli dell'applicazione.
+
 ### Esegui tutti i test:
 ```bash
 mvn test
 ```
 
-### Test Coverage:
-I test coprono i seguenti scenari:
-- ✅ Creazione biglietto valido
-- ✅ Recupero biglietto esistente
+### Test Coverage per Layer:
+
+#### 1️⃣ **Controller Layer** (11 test - `TicketControllerTest`)
+- ✅ Rendering pagina index
+- ✅ Creazione biglietto (form e API REST)
+- ✅ Visualizzazione dettaglio biglietto
+- ✅ Download immagine QR Code
+- ✅ Pagina scanner reception
+- ✅ Verifica biglietto (valido, già usato, non trovato)
+- ✅ Validazione input (errori 400)
+
+#### 2️⃣ **Service Layer** (6 test - `TicketServiceTest`)
+- ✅ Creazione biglietto con generazione QR Code
+- ✅ Recupero biglietto per ID
 - ✅ Validazione biglietto valido
-- ✅ Gestione biglietto già usato
+- ✅ Gestione biglietto già utilizzato
 - ✅ Gestione biglietto non trovato
+
+#### 3️⃣ **Repository Layer** (11 test - `TicketRepositoryTest`)
+- ✅ Operazioni CRUD complete (save, findById, update, delete)
+- ✅ Query personalizzate (findByQrCodeData)
+- ✅ Generazione UUID automatica
+- ✅ Persistenza immagini QR Code (BLOB)
+- ✅ Case sensitivity nelle ricerche
+
+#### 4️⃣ **Mapper Utility** (7 test - `TicketMapperTest`)
+- ✅ Conversione DTO → Entity
+- ✅ Conversione Entity → DTO
+- ✅ Gestione valori null
+- ✅ Round-trip conversion (integrità dati)
+
+#### 5️⃣ **Model Layer** (10 test - `TicketTest`)
+- ✅ Valori di default corretti
+- ✅ Getters e Setters
+- ✅ Gestione null values
+- ✅ Toggle stato validità
+- ✅ Array byte per QR Code (fino a 1000 bytes)
+- ✅ Formattazione UUID
+- ✅ LocalDateTime precision
+- ✅ Limiti VARCHAR(255)
+- ✅ Email con caratteri speciali
+
+#### 6️⃣ **DTO Validation** (11 test - `TicketDTOValidationTest`)
+- ✅ Validazione @NotBlank per tutti i campi
+- ✅ Validazione @Email per userEmail
+- ✅ Validazione @Size per lunghezze min/max
+- ✅ Gestione campi null
+- ✅ Gestione whitespace-only
+- ✅ Email complesse (subdomain, plus addressing)
+- ✅ Supporto caratteri Unicode
+
+#### 7️⃣ **Exception Handler** (6 test - `GlobalExceptionHandlerTest`)
+- ✅ TicketNotFoundException → 404
+- ✅ TicketAlreadyUsedException → 409
+- ✅ QRCodeGenerationException → 500
+- ✅ Validation errors → 400 con dettagli
+- ✅ Generic exceptions → 500
+
+#### 8️⃣ **Configuration** (3 test - `QRCodeConfigTest`)
+- ✅ Caricamento proprietà QR Code (width, height, format)
+- ✅ Validazione valori positivi
+- ✅ Spring Boot context loading
+
+#### 9️⃣ **Integration Test** (1 test - `QrticketsystemApplicationTests`)
+- ✅ Application context loads successfully
+
+### Test Statistics:
+```
+✅ Total Tests: 66
+✅ Failures: 0
+✅ Errors: 0
+✅ Skipped: 0
+✅ Success Rate: 100%
+```
+
+### Esegui test specifici:
+```bash
+# Solo test del controller
+mvn test -Dtest=TicketControllerTest
+
+# Solo test del service
+mvn test -Dtest=TicketServiceTest
+
+# Solo test di validazione
+mvn test -Dtest=TicketDTOValidationTest
+```
 
 ## 📁 Struttura del Progetto
 
@@ -195,6 +279,12 @@ src/
 │   └── resources/
 │       ├── application.properties
 │       ├── static/
+│       │   ├── css/
+│       │   │   └── style.css
+│       │   ├── js/
+│       │   │   └── scanner.js
+│       │   └── img/
+│       │       └── poster.svg         # Poster evento personalizzato
 │       └── templates/
 │           ├── index.html
 │           ├── reception_scanner.html
@@ -202,8 +292,23 @@ src/
 │           └── ticket_not_found.html
 └── test/
     └── java/it/cflm/qrticketsystem/
-        └── service/
-            └── TicketServiceTest.java
+        ├── config/
+        │   └── QRCodeConfigTest.java
+        ├── controller/
+        │   └── TicketControllerTest.java
+        ├── dto/
+        │   └── TicketDTOValidationTest.java
+        ├── exception/
+        │   └── GlobalExceptionHandlerTest.java
+        ├── model/
+        │   └── TicketTest.java
+        ├── repository/
+        │   └── TicketRepositoryTest.java
+        ├── service/
+        │   └── TicketServiceTest.java
+        ├── util/
+        │   └── TicketMapperTest.java
+        └── QrticketsystemApplicationTests.java
 ```
 
 ## � Configurazione
@@ -254,17 +359,37 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
 ## 📈 Miglioramenti Implementati
 
-Per una lista dettagliata dei miglioramenti, consulta [IMPROVEMENTS.md](IMPROVEMENTS.md)
+### Highlights Recenti:
 
-### Highlights:
+#### 🧪 **Testing Completo**
+- **66 test** che coprono tutti i livelli dell'applicazione
+- Test di integrazione con **@WebMvcTest** e **@DataJpaTest**
+- Copertura completa di controller, service, repository, mapper, model, DTOs
+- Test di validazione Jakarta Bean Validation
+- Test di gestione eccezioni centralizzata
+
+#### 🎨 **UI/UX Migliorata**
+- Poster SVG personalizzato per eventi (cocktail & music theme)
+- Design responsive con effetti neon
+- Grafica vettoriale scalabile
+
+#### 🏗️ **Architettura**
 - 🎯 **DTO Pattern** per separazione API/Model
 - 🚨 **Global Exception Handler** centralizzato
 - ✔️ **Bean Validation** su tutti gli input
 - 📝 **Logging SLF4J** strutturato
 - 💉 **Constructor Injection** con Lombok
 - 🔄 **@Transactional** per consistenza dati
-- 🧪 **Test Unitari** completi
+- � **Mapper Utility** per conversioni DTO/Entity
 - 📖 **OpenAPI/Swagger** documentation
+
+### Test Patterns Utilizzati:
+- **AAA Pattern** (Arrange-Act-Assert)
+- **Given-When-Then** per BDD-style tests
+- **MockBean** per isolation testing
+- **TestEntityManager** per JPA testing
+- **MockMvc** per integration testing
+- **Fluent Assertions** con AssertJ
 
     
 
