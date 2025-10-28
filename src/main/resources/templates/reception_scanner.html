@@ -97,6 +97,20 @@
             margin-top: 10px;
             font-size: 0.9em;
         }
+        .welcome-message {
+            font-size: 2.5em;
+            font-weight: 900;
+            color: #28a745;
+            text-align: center;
+            margin: 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: pulse 1.5s ease-in-out;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
         .back-link {
             margin-top: 30px;
             display: inline-block;
@@ -145,10 +159,22 @@
         }
     }
 
+    let isProcessing = false; // Flag per prevenire scansioni multiple
+
     function startQrScanner() {
         html5QrCode = new Html5Qrcode("qr-reader");
         const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+            // Previeni scansioni multiple dello stesso QR code
+            if (isProcessing) {
+                return;
+            }
+            
+            isProcessing = true;
             console.log(`QR Code scansionato: ${decodedText}`);
+            
+            // Ferma temporaneamente lo scanner
+            html5QrCode.pause(true);
+            
             const resultDiv = document.getElementById('qr-reader-results');
             resultDiv.style.display = 'block';
             resultDiv.className = 'result-message';
@@ -170,26 +196,31 @@
             .then(data => {
                 resultDiv.className = 'result-message valid-msg';
                 resultDiv.innerHTML = `
+                    <div class="welcome-message">🎉 Gasati, ${data.userName || 'Partecipante'}!!! 🎉</div>
                     <strong>✓ Biglietto Valido!</strong><br>
                     <div class="ticket-details">
                         <strong>Evento:</strong> ${data.eventName || 'N/A'}<br>
-                        <strong>Partecipante:</strong> ${data.userName || 'N/A'}<br>
                         <strong>Messaggio:</strong> ${data.message}
                     </div>
                 `;
-                // Continua la scansione dopo 3 secondi
+                // Riprendi la scansione dopo 5 secondi per dare tempo di leggere il messaggio
                 setTimeout(() => {
                     resultDiv.style.display = 'none';
                     resultDiv.innerHTML = '';
-                }, 3000);
+                    html5QrCode.resume();
+                    isProcessing = false;
+                }, 5000);
             })
             .catch(error => {
                 resultDiv.className = 'result-message invalid-msg';
                 const errorMessage = error.message || error.errors || 'Errore sconosciuto';
                 resultDiv.innerHTML = `<strong>✗ Errore:</strong> ${errorMessage}`;
+                // Riprendi la scansione dopo 4 secondi anche in caso di errore
                 setTimeout(() => {
                     resultDiv.style.display = 'none';
                     resultDiv.innerHTML = '';
+                    html5QrCode.resume();
+                    isProcessing = false;
                 }, 4000);
             });
         };

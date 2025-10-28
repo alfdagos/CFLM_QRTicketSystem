@@ -1,5 +1,19 @@
 package it.cflm.qrticketsystem.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+
 import it.cflm.qrticketsystem.config.QRCodeConfig;
 import it.cflm.qrticketsystem.dto.TicketRequestDTO;
 import it.cflm.qrticketsystem.dto.TicketResponseDTO;
@@ -9,20 +23,8 @@ import it.cflm.qrticketsystem.exception.TicketAlreadyUsedException;
 import it.cflm.qrticketsystem.exception.TicketNotFoundException;
 import it.cflm.qrticketsystem.model.Ticket;
 import it.cflm.qrticketsystem.repository.TicketRepository;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * Servizio per la gestione della logica di business relativa ai biglietti.
@@ -81,17 +83,18 @@ public class TicketService {
         ticket.setPurchaseDate(LocalDateTime.now());
         ticket.setValid(true);
 
-        // Genera un UUID per il biglietto
-        UUID ticketId = UUID.randomUUID();
-        ticket.setId(ticketId);
-
-        String qrCodeContent = ticketId.toString();
+        // Salva prima per ottenere l'ID generato automaticamente
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        // Usa l'ID generato per il QR Code
+        String qrCodeContent = savedTicket.getId().toString();
         byte[] qrCodeImage = generateQrCodeImage(qrCodeContent);
 
-        ticket.setQrCodeData(qrCodeContent);
-        ticket.setQrCodeImage(qrCodeImage);
+        savedTicket.setQrCodeData(qrCodeContent);
+        savedTicket.setQrCodeImage(qrCodeImage);
 
-        Ticket savedTicket = ticketRepository.save(ticket);
+        // Aggiorna con i dati del QR Code
+        savedTicket = ticketRepository.save(savedTicket);
         
         log.info("Biglietto creato con successo, ID: {}", savedTicket.getId());
         
