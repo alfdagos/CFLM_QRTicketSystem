@@ -1,26 +1,32 @@
 package it.cflm.qrticketsystem.controller;
 
-import it.cflm.qrticketsystem.dto.TicketRequestDTO;
-import it.cflm.qrticketsystem.dto.TicketResponseDTO;
-import it.cflm.qrticketsystem.dto.TicketValidationResponseDTO;
-import it.cflm.qrticketsystem.model.Ticket;
-import it.cflm.qrticketsystem.service.TicketService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.UUID;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import it.cflm.qrticketsystem.dto.TicketRequestDTO;
+import it.cflm.qrticketsystem.dto.TicketResponseDTO;
+import it.cflm.qrticketsystem.dto.TicketValidationResponseDTO;
+import it.cflm.qrticketsystem.model.Ticket;
+import it.cflm.qrticketsystem.service.TicketService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controller per la gestione delle richieste web e delle API relative ai biglietti.
@@ -45,6 +51,16 @@ public class TicketController {
         // Puoi aggiungere qui dati dinamici per il poster dell'evento o altre informazioni
         model.addAttribute("eventName", "Non succederà più! CFLM 2025 Party");
         return "index"; // Riferimento a src/main/resources/templates/index.html
+    }
+
+    /**
+     * Pagina di login personalizzata.
+     *
+     * @return Il nome della vista Thymeleaf (login.html).
+     */
+    @GetMapping("/login")
+    public String login() {
+        return "login";
     }
 
     /**
@@ -146,15 +162,14 @@ public class TicketController {
     }
 
     /**
-     * Mappa la richiesta GET a "/reception" per visualizzare l'interfaccia di scansione QR Code per la reception.
+     * Mappa la richiesta GET a "/reception" per visualizzare la pagina dello scanner QR Code.
+     * Ora protetta da Spring Security - solo utenti con ruolo RECEPTION o ADMIN possono accedere.
      *
      * @param model Il modello per passare dati alla vista Thymeleaf.
      * @return Il nome della vista Thymeleaf (reception_scanner.html).
      */
     @GetMapping("/reception")
     public String reception(Model model) {
-        // In un'applicazione reale, qui ci sarebbe un sistema di autenticazione robusto (es. Spring Security)
-        model.addAttribute("passwordRequired", true); // Simula la richiesta di una password
         return "reception_scanner"; // Riferimento a src/main/resources/templates/reception_scanner.html
     }
 

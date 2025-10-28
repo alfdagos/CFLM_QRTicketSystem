@@ -42,9 +42,11 @@ Il progetto segue un'architettura a livelli ben strutturata:
   - Spring Web
   - Spring Data JPA
   - Spring Validation
+  - Spring Security
 * **Lombok** - Riduzione boilerplate
 * **ZXing** - Generazione QR Code
 * **H2 Database** - Database in memoria (dev)
+* **BCrypt** - Password encoding
 
 ### Frontend:
 * **Thymeleaf** - Template engine
@@ -57,6 +59,7 @@ Il progetto segue un'architettura a livelli ben strutturata:
 * **Mockito** - Mocking framework con @MockBean
 * **AssertJ** - Fluent assertions
 * **Spring Boot Test** - Testing utilities (@WebMvcTest, @DataJpaTest)
+* **Spring Security Test** - `@AutoConfigureMockMvc(addFilters = false)` per test senza filtri security
 * **Jakarta Bean Validation** - DTO validation testing
 * **SpringDoc OpenAPI** - Documentazione API automatica
 
@@ -109,11 +112,16 @@ L'applicazione sarà disponibile su `http://localhost:8080`
 
 ### 📱 Verifica Biglietti (Reception)
 
+**Nota**: L'accesso alla reception ora richiede autenticazione.
+
 1. Vai su `http://localhost:8080/reception`
-2. Inserisci la password di accesso: `admin`
+2. Effettua il login con:
+   - **Username**: `reception` (o `admin`)
+   - **Password**: `reception123` (o `admin123`)
 3. Autorizza l'accesso alla webcam
 4. Scansiona il QR Code del biglietto
 5. Visualizza il risultato della validazione
+6. Usa il pulsante **"🔓 Logout"** per uscire
 
 ### 🔌 API REST
 
@@ -129,9 +137,22 @@ Content-Type: application/json
 }
 ```
 
+**Nota**: Quando si effettuano richieste tramite JavaScript fetch o AJAX, è necessario includere il token CSRF negli header:
+```javascript
+fetch('/api/tickets', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-TOKEN': csrfToken  // Token ottenuto da Thymeleaf
+  },
+  body: JSON.stringify(ticketData)
+});
+```
+
 #### Verifica Biglietto
 ```http
 POST /reception/verify/{ticketId}
+X-CSRF-TOKEN: <token>
 ```
 
 #### Ottieni QR Code
@@ -256,7 +277,8 @@ src/
 │   │   ├── QrTicketSystemApplication.java
 │   │   ├── config/
 │   │   │   ├── OpenApiConfig.java
-│   │   │   └── QRCodeConfig.java
+│   │   │   ├── QRCodeConfig.java
+│   │   │   └── SecurityConfig.java         # Spring Security Configuration
 │   │   ├── controller/
 │   │   │   └── TicketController.java
 │   │   ├── dto/
@@ -287,6 +309,7 @@ src/
 │       │       └── poster.svg         # Poster evento personalizzato
 │       └── templates/
 │           ├── index.html
+│           ├── login.html                  # Pagina login Spring Security
 │           ├── reception_scanner.html
 │           ├── ticket_detail.html
 │           └── ticket_not_found.html
@@ -344,18 +367,31 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 ## 🔒 Sicurezza
 
 ### Implementazioni Attuali:
-- ✅ Validazione input con Bean Validation
-- ✅ Gestione sicura delle eccezioni
-- ✅ Logging degli accessi
-- ✅ Protezione SQL Injection (JPA)
+- 🔐 **Spring Security** per autenticazione/autorizzazione
+- 👥 **Role-Based Access Control** (ADMIN, RECEPTION, USER)
+- 🔑 **BCrypt Password Encoding**
+- 🔒 **Form-Based Login** con sessioni sicure
+- ✅ **Validazione input** con Bean Validation
+- 🚨 **Gestione sicura delle eccezioni**
+- 📝 **Logging degli accessi**
+- 🛡️ **Protezione SQL Injection** (JPA)
+- 🔐 **CSRF Protection** per form
+
+### Credenziali di Test:
+- **Admin**: `admin` / `admin123` (accesso completo)
+- **Reception**: `reception` / `reception123` (solo verifica biglietti)
+- **User**: `user` / `user123` (funzionalità limitate)
+
+> � Vedi [SECURITY.md](SECURITY.md) per dettagli completi sulla configurazione di sicurezza.
 
 ### Miglioramenti Suggeriti per Produzione:
-- 🔐 **Spring Security** per autenticazione/autorizzazione
 - 🔑 **JWT** per l'API REST
-- 🔒 **HTTPS** obbligatorio
+- � **Database Users** (al posto di in-memory)
 - 📧 **Email Verification**
+- 🔒 **HTTPS** obbligatorio
 - 🚦 **Rate Limiting**
-- 🔐 **Crittografia QR Code**
+- 🔐 **2FA (Two-Factor Authentication)**
+- 🔒 **Password Reset** via email
 
 ## 📈 Miglioramenti Implementati
 
@@ -369,9 +405,13 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 - Test di gestione eccezioni centralizzata
 
 #### 🎨 **UI/UX Migliorata**
-- Poster SVG personalizzato per eventi (cocktail & music theme)
-- Design responsive con effetti neon
-- Grafica vettoriale scalabile
+- Banner orizzontale ottimizzato (1200x400px) per visualizzazione web
+- Design moderno con gradiente arcobaleno e effetti neon
+- Animazioni sulle stelle pulsanti
+- Poster SVG personalizzato con tema party (cocktail, note musicali, icone emoji)
+- Layout responsive con `object-fit: contain` per visualizzazione completa
+- Effetti spotlight radiali per maggiore profondità
+- Decorazioni bilanciate su entrambi i lati
 
 #### 🏗️ **Architettura**
 - 🎯 **DTO Pattern** per separazione API/Model
@@ -380,8 +420,18 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 - 📝 **Logging SLF4J** strutturato
 - 💉 **Constructor Injection** con Lombok
 - 🔄 **@Transactional** per consistenza dati
-- � **Mapper Utility** per conversioni DTO/Entity
+- 🧰 **Mapper Utility** per conversioni DTO/Entity
 - 📖 **OpenAPI/Swagger** documentation
+- 🔐 **Spring Security** per autenticazione/autorizzazione
+
+#### 🔒 **Sicurezza**
+- Role-Based Access Control (RBAC)
+- BCrypt password encoding
+- Form-based login con sessioni sicure
+- CSRF protection su tutti i form e richieste POST
+- Token CSRF automaticamente incluso nelle richieste via Thymeleaf
+- Protezione endpoint sensibili
+- Test disabilitano filtri Spring Security con `@AutoConfigureMockMvc(addFilters = false)`
 
 ### Test Patterns Utilizzati:
 - **AAA Pattern** (Arrange-Act-Assert)

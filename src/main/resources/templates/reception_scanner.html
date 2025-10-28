@@ -31,43 +31,26 @@
             font-size: 2em;
             font-weight: 700;
         }
-        .password-prompt {
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
         }
-        .password-prompt label {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-            color: #555;
-        }
-        .password-prompt input[type="password"] {
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            font-size: 1em;
-            width: 250px;
-            margin-right: 10px;
-        }
-        .password-prompt button {
-            padding: 10px 20px;
-            background-color: #28a745;
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #dc3545;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 1em;
+            font-size: 0.9em;
+            text-decoration: none;
+            display: inline-block;
             transition: background-color 0.3s ease;
         }
-        .password-prompt button:hover {
-            background-color: #218838;
-        }
-        #password-message {
-            color: red;
-            margin-top: 10px;
-            font-weight: 500;
-        }
-        #scanner-container {
-            display: none; /* Inizialmente nascosto */
+        .logout-btn:hover {
+            background-color: #c82333;
         }
         #qr-reader {
             width: 100%;
@@ -128,13 +111,11 @@
 </head>
 <body>
 <div class="container">
-    <h1>Verifica Biglietti (Reception)</h1>
-
-    <div th:if="${passwordRequired}" class="password-prompt" id="passwordPromptDiv">
-        <label for="password">Inserisci la password:</label>
-        <input type="password" id="password" required>
-        <button onclick="checkPassword()">Accedi</button>
-        <p id="password-message"></p>
+    <div class="header-actions">
+        <h1 style="margin: 0;">Verifica Biglietti (Reception)</h1>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="logout-btn">🔓 Logout</button>
+        </form>
     </div>
 
     <div id="scanner-container">
@@ -145,21 +126,12 @@
     <a href="/" class="back-link">Torna alla pagina principale</a>
 </div>
 
-<script>
-    const ACCESS_PASSWORD = "admin"; // In un'applicazione reale, usa un sistema di autenticazione robusto!
+<script th:inline="javascript">
+    // Ottieni il token CSRF dal meta tag (inserito da Thymeleaf)
+    const csrfToken = /*[[${_csrf.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+
     let html5QrCode;
-
-    function checkPassword() {
-        const enteredPassword = document.getElementById('password').value;
-        if (enteredPassword === ACCESS_PASSWORD) {
-            document.getElementById('passwordPromptDiv').style.display = 'none';
-            document.getElementById('scanner-container').style.display = 'block';
-            startQrScanner();
-        } else {
-            document.getElementById('password-message').innerText = 'Password errata!';
-        }
-    }
-
     let isProcessing = false; // Flag per prevenire scansioni multiple
 
     function startQrScanner() {
@@ -181,12 +153,20 @@
             resultDiv.className = 'result-message';
             resultDiv.innerHTML = 'Scansionato: ' + decodedText + ' - Verifica in corso...';
 
+            // Prepara gli headers con il token CSRF
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // Aggiungi il token CSRF all'header se presente
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
             // Chiama l'API di backend per verificare il biglietto
             fetch(`/reception/verify/${decodedText}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: headers
             })
             .then(response => {
                 if (!response.ok) {
@@ -240,10 +220,11 @@
             });
     }
 
-    // Se la password non è richiesta (es. dopo l'autenticazione in un'app più complessa), avvia direttamente lo scanner
-    if (!document.getElementById('passwordPromptDiv')) {
+    // Avvia lo scanner QR automaticamente quando la pagina è carica
+    // L'accesso è protetto da Spring Security, quindi se l'utente arriva qui è già autenticato
+    document.addEventListener('DOMContentLoaded', function() {
         startQrScanner();
-    }
+    });
 </script>
 </body>
 </html>
