@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: qrticketsystem
+
+  # Database H2 in memoria (Sviluppo/Test)
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  # Database PostgreSQL (Produzione)
+  # Decommenta le righe seguenti per usare PostgreSQL
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/qrticketsystem
+#    username: postgres
+#    password: your_password
+#    driver-class-name: org.postgresql.Driver
+#    hikari:
+#      maximum-pool-size: 10
+#      minimum-idle: 5
+#      connection-timeout: 30000
+#      idle-timeout: 600000
+#      max-lifetime: 1800000
+
+  # JPA / Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        # Per PostgreSQL, usa questa dialect:
+        # dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # H2 Console
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # Thymeleaf
+  thymeleaf:
+    cache: false
+
+  # Web Resources
+  web:
+    resources:
+      add-mappings: true
+
+# QR Code Configuration
+qrcode:
+  width: 300
+  height: 300
+  format: PNG
+
+# Logging
+logging:
+  level:
+    it.cflm.qrticketsystem: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    # Disabilita log errori 404 per risorse statiche
+    org.springframework.web.servlet.resource.ResourceHttpRequestHandler: WARN
+    org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Server Configuration
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+
