@@ -1,219 +1,270 @@
 # CFLM QR Ticket System
 
-Questo progetto è un sistema di gestione di biglietti per le feste gasanti del CFLM basato su **QR Code**, realizzato con **Java Spring Boot** per il backend e **PostgreSQL** come database. Offre funzionalità complete per la generazione, visualizzazione e verifica dei biglietti, rendendolo ideale per eventi, conferenze o qualsiasi scenario che richieda un sistema di ingresso con validazione.
+## 📋 Descrizione
 
-## 🚀 Funzionalità
+Sistema di gestione biglietti per eventi CFLM basato su **QR Code**, realizzato con **Java Spring Boot** e **H2 Database** (configurabile per PostgreSQL). Offre funzionalità complete per la generazione, visualizzazione e verifica dei biglietti, rendendolo ideale per eventi, conferenze o qualsiasi scenario che richieda un sistema di ingresso con validazione.
 
-* **Generazione di Biglietti Unici:** Ogni "acquisto" di biglietto crea una voce unica nel database con un ID univoco.
+## ✨ Caratteristiche Principali
 
-* **QR Code Dinamici:** Per ogni biglietto viene generato un QR Code contenente l'ID univoco del biglietto.
+* ✅ **Generazione Biglietti Unici** con ID UUID
+* 🔲 **QR Code Dinamici** per ogni biglietto
+* 📱 **Scanner QR Code** via webcam per la reception
+* ✔️ **Validazione Biglietti** con prevenzione duplicati
+* 📊 **API REST** documentate con OpenAPI/Swagger
+* 🔒 **Validazione Input** con Bean Validation
+* 🚨 **Gestione Errori Centralizzata**
+* 📝 **Logging Strutturato**
+* 🧪 **Test Unitari** con JUnit 5 e Mockito
+* 🎨 **UI Responsive** con Thymeleaf
 
-* **Visualizzazione Biglietto Utente:** Un URL dedicato permette all'utente di visualizzare il proprio biglietto, inclusi i dettagli e l'immagine del QR Code.
+## 🏗️ Architettura
 
-* **Interfaccia Reception/Verifica:** Una pagina dedicata consente al personale di reception di scansionare i QR Code (tramite webcam del dispositivo) e verificare istantaneamente la validità del biglietto, marcandolo come "usato" per prevenire accessi duplicati.
+Il progetto segue un'architettura a livelli ben strutturata:
 
-* **Persistenza Dati:** Tutti i dati dei biglietti e il loro stato di validità sono memorizzati in un database PostgreSQL.
-
-* **Frontend Semplificato:** Le pagine HTML sono servite tramite Thymeleaf, offrendo un'interfaccia utente funzionale per l'interazione con il sistema.
+```
+📦 qr-ticket-system
+├── 🎯 controller/          # REST Controllers & Web Controllers
+├── 🔧 service/             # Business Logic Layer
+├── 💾 repository/          # Data Access Layer (Spring Data JPA)
+├── 📋 model/               # JPA Entities
+├── 📤 dto/                 # Data Transfer Objects
+├── ⚠️ exception/           # Custom Exceptions & Global Handler
+├── ⚙️ config/              # Configuration Classes
+└── 🛠️ util/                # Utility Classes
+```
 
 ## 🛠️ Tecnologie Utilizzate
 
-* **Backend:**
+### Backend:
+* **Java 21**
+* **Spring Boot 3.3.1**
+  - Spring Web
+  - Spring Data JPA
+  - Spring Validation
+* **Lombok** - Riduzione boilerplate
+* **ZXing** - Generazione QR Code
+* **H2 Database** - Database in memoria (dev)
 
-    * Java (versione 17+)
+### Frontend:
+* **Thymeleaf** - Template engine
+* **HTML5/CSS3** - Struttura e stile
+* **JavaScript** - Interattività
+* **HTML5-QRCode** - Scanner QR lato browser
 
-    * Spring Boot (versione 3.x.x)
-
-    * Spring Data JPA (per l'interazione ORM con il database)
-
-    * Lombok (per ridurre il boilerplate code)
-
-    * ZXing (per la generazione dei QR Code)
-
-* **Database:**
-
-    * PostgreSQL
-
-* **Frontend:**
-
-    * Thymeleaf (per il templating HTML)
-
-    * HTML, CSS, JavaScript
-
-    * HTML5-QR Code (libreria JavaScript per la scansione lato browser)
+### Testing & Documentation:
+* **JUnit 5** - Testing framework
+* **Mockito** - Mocking framework
+* **AssertJ** - Fluent assertions
+* **SpringDoc OpenAPI** - Documentazione API
 
 ## ⚙️ Prerequisiti
 
-Assicurati di avere installati i seguenti strumenti sul tuo sistema:
+* **Java Development Kit (JDK)**: versione 17 o superiore
+* **Apache Maven**: 3.6+ per la gestione delle dipendenze
+* **Un IDE**: (IntelliJ IDEA, Eclipse, VS Code con estensioni Java)
 
-* **Java Development Kit (JDK):** Versione 17 o superiore.
+## � Installazione e Avvio
 
-* **Apache Maven:** Per la gestione delle dipendenze e la compilazione del progetto.
+### 1. Clona il Repository
 
-* **PostgreSQL:** Un'istanza del database PostgreSQL in esecuzione.
-
-* **Un IDE:** (Es. IntelliJ IDEA, Eclipse, VS Code con estensioni Java) per aprire e gestire il progetto.
-
-## 🗄️ Configurazione del Database
-
-1. **Crea il Database:**
-   Apri il tuo client PostgreSQL (es. `psql` o pgAdmin) ed esegui il seguente comando per creare il database:
-```sql
-      CREATE DATABASE qr_ticket_system;
+```bash
+git clone https://github.com/alfdagos/CFLM_QRTicketSystem.git
+cd CFLM_QRTicketSystem
 ```
-2. **Crea un Utente (Opzionale ma consigliato):**
-   Se non vuoi usare l'utente `postgres` predefinito, puoi creare un nuovo utente e assegnare i permessi al database:
-```sql
-      CREATE USER your_username WITH PASSWORD 'your_password';
-      GRANT ALL PRIVILEGES ON DATABASE qr_ticket_db TO your_username;
-```
-Sostituisci `your_username` e `your_password` con le credenziali che desideri utilizzare.
 
-3. **Configura `application.properties`:**
-   Nel file `src/main/resources/application.properties` del progetto, aggiorna le credenziali di connessione al database:
+### 2. Compila il Progetto
+
+```bash
+mvn clean install
+```
+
+### 3. Esegui i Test
+
+```bash
+mvn test
+```
+
+### 4. Avvia l'Applicazione
+
+```bash
+mvn spring-boot:run
+```
+
+L'applicazione sarà disponibile su `http://localhost:8080`
+
+## 📚 Utilizzo
+
+### 🎫 Creazione Biglietto
+
+1. Vai su `http://localhost:8080/`
+2. Compila il form con:
+   - Nome Evento
+   - Nome Partecipante
+   - Email
+3. Clicca su "Genera Biglietto"
+4. Visualizza il biglietto con il QR Code generato
+
+### 📱 Verifica Biglietti (Reception)
+
+1. Vai su `http://localhost:8080/reception`
+2. Inserisci la password di accesso: `admin`
+3. Autorizza l'accesso alla webcam
+4. Scansiona il QR Code del biglietto
+5. Visualizza il risultato della validazione
+
+### 🔌 API REST
+
+#### Crea Biglietto
+```http
+POST /api/tickets
+Content-Type: application/json
+
+{
+  "eventName": "CFLM 2025 Party",
+  "userName": "Mario Rossi",
+  "userEmail": "mario.rossi@example.com"
+}
+```
+
+#### Verifica Biglietto
+```http
+POST /reception/verify/{ticketId}
+```
+
+#### Ottieni QR Code
+```http
+GET /qrcode/{ticketId}
+```
+
+### 📖 Documentazione API
+
+Accedi alla documentazione Swagger: `http://localhost:8080/swagger-ui.html`
+
+### 💾 Console H2 Database
+
+Per visualizzare il database in memoria:
+* URL: `http://localhost:8080/h2-console`
+* JDBC URL: `jdbc:h2:mem:testdb`
+* Username: `sa`
+* Password: (lascia vuoto)
+
+## 🧪 Testing
+
+### Esegui tutti i test:
+```bash
+mvn test
+```
+
+### Test Coverage:
+I test coprono i seguenti scenari:
+- ✅ Creazione biglietto valido
+- ✅ Recupero biglietto esistente
+- ✅ Validazione biglietto valido
+- ✅ Gestione biglietto già usato
+- ✅ Gestione biglietto non trovato
+
+## 📁 Struttura del Progetto
+
+```
+src/
+├── main/
+│   ├── java/it/cflm/qrticketsystem/
+│   │   ├── QrTicketSystemApplication.java
+│   │   ├── config/
+│   │   │   ├── OpenApiConfig.java
+│   │   │   └── QRCodeConfig.java
+│   │   ├── controller/
+│   │   │   └── TicketController.java
+│   │   ├── dto/
+│   │   │   ├── TicketRequestDTO.java
+│   │   │   ├── TicketResponseDTO.java
+│   │   │   └── TicketValidationResponseDTO.java
+│   │   ├── exception/
+│   │   │   ├── GlobalExceptionHandler.java
+│   │   │   ├── QRCodeGenerationException.java
+│   │   │   ├── TicketAlreadyUsedException.java
+│   │   │   └── TicketNotFoundException.java
+│   │   ├── model/
+│   │   │   └── Ticket.java
+│   │   ├── repository/
+│   │   │   └── TicketRepository.java
+│   │   ├── service/
+│   │   │   └── TicketService.java
+│   │   └── util/
+│   │       └── TicketMapper.java
+│   └── resources/
+│       ├── application.properties
+│       ├── static/
+│       └── templates/
+│           ├── index.html
+│           ├── reception_scanner.html
+│           ├── ticket_detail.html
+│           └── ticket_not_found.html
+└── test/
+    └── java/it/cflm/qrticketsystem/
+        └── service/
+            └── TicketServiceTest.java
+```
+
+## � Configurazione
+
+### application.properties
+
 ```properties
-    spring.datasource.url=jdbc:postgresql://localhost:5432/qr_ticket_db
-    spring.datasource.username=your_username
-    spring.datasource.password=your_password
-    spring.datasource.driver-class-name=org.postgresql.Driver
-    spring.jpa.hibernate.ddl-auto=update # 'create' per la prima esecuzione, 'update' per le successive
-    spring.jpa.show-sql=true
-    spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-    
-    spring.thymeleaf.cache=false
-```
-La proprietà `spring.jpa.hibernate.ddl-auto=update` farà sì che Spring Boot crei automaticamente la tabella `tickets` al primo avvio, se non esiste.
+# Database H2
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.jpa.hibernate.ddl-auto=update
 
-## 🏗️ Struttura del Progetto
+# QR Code Settings
+qrcode.width=300
+qrcode.height=300
+qrcode.format=PNG
 
-Il progetto segue la tipica struttura di un'applicazione Spring Boot:
-```
-qr-ticket-system/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── it/
-│   │   │       └── cflm/
-│   │   │           └── qrticketsystem/
-│   │   │               ├── QrTicketSystemApplication.java    // Classe principale dell'applicazione
-│   │   │               ├── controller/
-│   │   │               │   └── TicketController.java         // Controller Web e API REST
-│   │   │               ├── model/
-│   │   │               │   └── Ticket.java                   // Entità JPA per i Biglietti
-│   │   │               ├── repository/
-│   │   │               │   └── TicketRepository.java         // Repository Spring Data JPA
-│   │   │               └── service/
-│   │   │                   └── TicketService.java            // Logica di business e generazione QR
-│   │   └── resources/
-│   │       ├── application.properties  // Configurazione del database
-│   │       ├── static/                 // Risorse statiche (CSS, JS, immagini)
-│   │       │   └── img/
-│   │       │       └── poster.jpg      // Immagine di esempio per il poster dell'evento
-│   │       └── templates/              // Template HTML con Thymeleaf
-│   │           ├── index.html          // Pagina principale/Acquisto biglietto
-│   │           ├── reception_scanner.html // Pagina scanner per la reception
-│   │           ├── ticket_detail.html  // Pagina dettagli del biglietto
-│   │           └── ticket_not_found.html // Pagina di errore per biglietto non trovato
-│   └── test/
-│       └── java/
-│           └── it/
-│               └── cflm/
-│                   └── qrticketsystem/
-│                       └── QrTicketSystemApplicationTests.java // Test di esempio
-└── pom.xml                             // File di configurazione Maven
+# Logging
+logging.level.it.cflm.qrticketsystem=DEBUG
 ```
 
-## 🚀 Compilazione ed Esecuzione
+### Per usare PostgreSQL:
 
-1. **Clona il Repository (o crea il progetto):**
+1. Decommenta la dipendenza PostgreSQL in `pom.xml`
+2. Aggiorna `application.properties`:
 
-```bash
-    git clone https://github.com/tuo-username/qr-ticket-system.git
-    cd qr-ticket-system
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/qr_ticket_db
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 ```
 
-*Nota:* Se stai riutilizzando il codice fornito senza un repository GitHub, assicurati di aver ricreato la struttura delle cartelle `it/cflm/qrticketsystem` e copiato i file sorgente al loro interno.
+## 🔒 Sicurezza
 
-2. **Compila il Progetto:**
-   Apri un terminale nella directory principale del progetto ed esegui:
-```bash
-    mvn clean install
-```
+### Implementazioni Attuali:
+- ✅ Validazione input con Bean Validation
+- ✅ Gestione sicura delle eccezioni
+- ✅ Logging degli accessi
+- ✅ Protezione SQL Injection (JPA)
 
-Questo scaricherà tutte le dipendenze e compilerà l'applicazione.
+### Miglioramenti Suggeriti per Produzione:
+- 🔐 **Spring Security** per autenticazione/autorizzazione
+- 🔑 **JWT** per l'API REST
+- 🔒 **HTTPS** obbligatorio
+- 📧 **Email Verification**
+- 🚦 **Rate Limiting**
+- 🔐 **Crittografia QR Code**
 
-3. **Aggiungi l'Immagine del Poster:**
-   Crea la cartella `src/main/resources/static/img/` e inserisci un'immagine denominata `poster.jpg` al suo interno. Questa verrà visualizzata sulla pagina iniziale.
+## 📈 Miglioramenti Implementati
 
-4. **Esegui l'Applicazione:**
-   Puoi eseguire l'applicazione in due modi:
+Per una lista dettagliata dei miglioramenti, consulta [IMPROVEMENTS.md](IMPROVEMENTS.md)
 
-* **Tramite Maven:**
-
-```bash
-  mvn spring-boot:run
-```
-
-* **Tramite JAR eseguibile:**
-  Dopo la compilazione, troverai un file JAR nella directory `target/` (es. `qr-ticket-system-0.0.1-SNAPSHOT.jar`). Eseguilo con:
-
-```bash 
-  java -jar target/qr-ticket-system-0.0.1-SNAPSHOT.jar
-```
-
-L'applicazione si avvierà su `http://localhost:8080` per impostazione predefinita.
-
-## 🎯 Utilizzo dell'Applicazione
-
-Una volta che l'applicazione è in esecuzione:
-
-1. **Pagina Principale / Acquisto Biglietti:**
-
-* Apri il tuo browser e vai a `http://localhost:8080/`.
-
-* Vedrai una pagina di benvenuto con un modulo.
-
-* Compila i campi (Nome Evento, Nome, Email) e clicca su **"Genera Biglietto"**.
-
-* Verrai reindirizzato alla pagina di dettaglio del biglietto appena creato.
-
-2. **Visualizzazione Biglietto:**
-
-* Dopo aver generato un biglietto, la pagina mostrerà i dettagli del biglietto e l'immagine del QR Code associato.
-
-* L'URL sarà nel formato `http://localhost:8080/ticket/{ID_DEL_BIGLIETTO}`. Puoi condividere questo link con l'utente del biglietto.
-
-3. **Lettore QR Code (Reception):**
-
-* Vai a `http://localhost:8080/reception`.
-
-* Per accedere allo scanner, ti verrà chiesta una password. Per questo progetto dimostrativo, la password è `admin`.
-
-* Dopo aver inserito la password, il browser chiederà l'autorizzazione per accedere alla tua webcam. Concedi l'accesso.
-
-* Posiziona un QR Code di un biglietto (generato in precedenza) davanti alla webcam. La libreria HTML5-QR Code lo scansionerà automaticamente.
-
-* Il sistema invierà l'ID scansionato al backend per la verifica. Un messaggio indicherà se il biglietto è `valido e usato` o `non valido o già usato`.
-
-## 🔒 Considerazioni sulla Sicurezza e Miglioramenti Futuri
-
-Questo progetto è un punto di partenza. Per un'applicazione pronta per la produzione, si raccomandano i seguenti miglioramenti:
-
-* **Autenticazione e Autorizzazione Reali:** La password `admin` per la reception è per scopi dimostrativi. Implementa un sistema di autenticazione e autorizzazione robusto utilizzando **Spring Security** (con JWT, OAuth2, ecc.) per proteggere gli endpoint API e le pagine sensibili.
-
-* **Crittografia QR Code:** Per una maggiore sicurezza, i dati all'interno del QR Code potrebbero essere crittografati o firmati digitalmente per prevenire la manomissione.
-
-* **Validazione Input:** Aggiungi una validazione più rigorosa dei dati di input (`@Valid` e DTO in Spring Boot) per prevenire vulnerabilità e garantire l'integrità dei dati.
-
-* **Gestione degli Errori:** Implementa un'intercettazione e una gestione degli errori più sofisticate per fornire feedback chiari all'utente in caso di problemi.
-
-* **Frontend Avanzato:** Per un'esperienza utente più moderna e reattiva, integra un framework JavaScript come **React**, **Angular** o **Vue.js** per il frontend, comunicando con il backend Spring Boot tramite API REST.
-
-* **Notifiche:** Aggiungi funzionalità per l'invio di email di conferma con il biglietto allegato dopo l'acquisto.
-
-* **Test:** Scrivi test unitari, di integrazione e end-to-end per garantire l'affidabilità dell'applicazione.
-
-Grazie per aver esplorato il progetto! Sentiti libero di contribuire, segnalare bug o suggerire miglioramenti
+### Highlights:
+- 🎯 **DTO Pattern** per separazione API/Model
+- 🚨 **Global Exception Handler** centralizzato
+- ✔️ **Bean Validation** su tutti gli input
+- 📝 **Logging SLF4J** strutturato
+- 💉 **Constructor Injection** con Lombok
+- 🔄 **@Transactional** per consistenza dati
+- 🧪 **Test Unitari** completi
+- 📖 **OpenAPI/Swagger** documentation
 
     
 

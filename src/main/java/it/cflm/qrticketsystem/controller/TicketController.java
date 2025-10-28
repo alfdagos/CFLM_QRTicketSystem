@@ -1,13 +1,18 @@
 package it.cflm.qrticketsystem.controller;
 
+import it.cflm.qrticketsystem.dto.TicketRequestDTO;
+import it.cflm.qrticketsystem.dto.TicketResponseDTO;
+import it.cflm.qrticketsystem.dto.TicketValidationResponseDTO;
 import it.cflm.qrticketsystem.model.Ticket;
 import it.cflm.qrticketsystem.service.TicketService;
-import com.google.zxing.WriterException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +20,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.UUID;
 
 /**
@@ -24,10 +28,11 @@ import java.util.UUID;
 @Controller
 @RequestMapping("/")
 @Tag(name = "Ticket Controller", description = "Gestione dei biglietti e QR Code")
+@RequiredArgsConstructor
+@Slf4j
 public class TicketController {
 
-    @Autowired
-    private TicketService ticketService;
+    private final TicketService ticketService;
 
     /**
      * Mappa la richiesta GET alla root ("/") per visualizzare la pagina principale dell'evento.
@@ -49,29 +54,49 @@ public class TicketController {
      * @param eventName Il nome dell'evento.
      * @param userName Il nome dell'utente.
      * @param userEmail L'email dell'utente.
-     * @return ResponseEntity contenente il biglietto creato o un messaggio di errore.
+     * @return ResponseEntity contenente il biglietto creato.
      */
     @Operation(summary = "Crea un nuovo biglietto")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Biglietto creato con successo"),
-            @ApiResponse(responseCode = "500", description = "Errore nella creazione del biglietto")
+            @ApiResponse(responseCode = "400", description = "Dati di input non validi"),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @PostMapping("/tickets")
-    public ResponseEntity<Ticket> createTicket(@RequestParam String eventName,
-                                             @RequestParam String userName,
-                                             @RequestParam String userEmail) {
-        try {
-            Ticket newTicket = ticketService.createTicket(eventName, userName, userEmail);
-            // Reindirizza l'utente alla pagina del biglietto appena creato
-            // Nota: per un'API REST pura, si restituirebbe solo il JSON del biglietto.
-            // Qui usiamo ResponseEntity per la semplicità della risposta API.
-            // Per il reindirizzamento in un contesto web, si userebbe "redirect:/ticket/" + newTicket.getId();
-            return new ResponseEntity<>(newTicket, HttpStatus.CREATED);
-        } catch (WriterException | IOException e) {
-            // Logga l'errore per il debugging
-            System.err.println("Errore durante la creazione del biglietto: " + e.getMessage());
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<TicketResponseDTO> createTicket(
+            @RequestParam String eventName,
+            @RequestParam String userName,
+            @RequestParam String userEmail) {
+        
+        log.info("Richiesta creazione biglietto per evento: {}", eventName);
+        
+        TicketRequestDTO requestDTO = new TicketRequestDTO(eventName, userName, userEmail);
+        TicketResponseDTO newTicket = ticketService.createTicket(requestDTO);
+        
+        return new ResponseEntity<>(newTicket, HttpStatus.CREATED);
+    }
+    
+    /**
+     * API REST per creare un biglietto con validazione.
+     *
+     * @param requestDTO DTO con i dati del biglietto
+     * @return ResponseEntity contenente il biglietto creato
+     */
+    @Operation(summary = "Crea un nuovo biglietto (API REST con validazione)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Biglietto creato con successo"),
+            @ApiResponse(responseCode = "400", description = "Dati di input non validi"),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
+    })
+    @PostMapping("/api/tickets")
+    public ResponseEntity<TicketResponseDTO> createTicketApi(
+            @Valid @RequestBody TicketRequestDTO requestDTO) {
+        
+        log.info("Richiesta API creazione biglietto per evento: {}", requestDTO.getEventName());
+        
+        TicketResponseDTO newTicket = ticketService.createTicket(requestDTO);
+        
+        return new ResponseEntity<>(newTicket, HttpStatus.CREATED);
     }
 
     /**
@@ -79,19 +104,23 @@ public class TicketController {
      *
      * @param ticketId L'UUID del biglietto.
      * @param model Il modello per passare dati alla vista Thymeleaf.
-     * @return Il nome della vista Thymeleaf (ticket_detail.html o ticket_not_found.html).
+     * @return Il nome della vista Thymeleaf (ticket_detail.html).
      */
     @GetMapping("/ticket/{ticketId}")
-    public String viewTicket(@PathVariable UUID ticketId, Model model) {
-        return ticketService.getTicketById(ticketId)
-                .map(ticket -> {
-                    model.addAttribute("ticket", ticket);
-                    // Converte l'array di byte dell'immagine QR in una stringa Base64 per l'embedding nell'HTML
-                    String base64QrCode = java.util.Base64.getEncoder().encodeToString(ticket.getQrCodeImage());
-                    model.addAttribute("qrCodeBase64", base64QrCode);
-                    return "ticket_detail"; // Riferimento a src/main/resources/templates/ticket_detail.html
-                })
-                .orElse("ticket_not_found"); // Riferimento a src/main/resources/templates/ticket_not_found.html
+    public String viewTicket(
+            @Parameter(description = "ID del biglietto") @PathVariable UUID ticketId, 
+            Model model) {
+        
+        log.debug("Visualizzazione biglietto ID: {}", ticketId);
+        
+        Ticket ticket = ticketService.getTicketById(ticketId);
+        model.addAttribute("ticket", ticket);
+        
+        // Converte l'array di byte dell'immagine QR in una stringa Base64 per l'embedding nell'HTML
+        String base64QrCode = java.util.Base64.getEncoder().encodeToString(ticket.getQrCodeImage());
+        model.addAttribute("qrCodeBase64", base64QrCode);
+        
+        return "ticket_detail";
     }
 
     /**
@@ -99,7 +128,7 @@ public class TicketController {
      * Utile se si desidera visualizzare il QR Code come un'immagine stand-alone.
      *
      * @param ticketId L'UUID del biglietto.
-     * @return ResponseEntity contenente l'immagine PNG del QR Code o un 404.
+     * @return ResponseEntity contenente l'immagine PNG del QR Code.
      */
     @Operation(summary = "Ottieni l'immagine PNG del QR Code di un biglietto")
     @ApiResponses(value = {
@@ -107,10 +136,13 @@ public class TicketController {
             @ApiResponse(responseCode = "404", description = "Biglietto non trovato")
     })
     @GetMapping(value = "/qrcode/{ticketId}", produces = MediaType.IMAGE_PNG_VALUE)
-    public ResponseEntity<byte[]> getQrCodeImage(@PathVariable UUID ticketId) {
-        return ticketService.getTicketById(ticketId)
-                .map(ticket -> new ResponseEntity<>(ticket.getQrCodeImage(), HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<byte[]> getQrCodeImage(
+            @Parameter(description = "ID del biglietto") @PathVariable UUID ticketId) {
+        
+        log.debug("Richiesta QR Code per biglietto ID: {}", ticketId);
+        
+        byte[] qrCodeImage = ticketService.getQrCodeImage(ticketId);
+        return new ResponseEntity<>(qrCodeImage, HttpStatus.OK);
     }
 
     /**
@@ -131,20 +163,21 @@ public class TicketController {
      * Questa API verrà chiamata dal frontend (JavaScript) dopo la scansione di un QR Code.
      *
      * @param ticketId L'UUID del biglietto da verificare.
-     * @return ResponseEntity contenente un messaggio di stato (valido/non valido).
+     * @return ResponseEntity contenente il risultato della validazione.
      */
     @Operation(summary = "Verifica un biglietto tramite il suo ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Biglietto valido"),
-            @ApiResponse(responseCode = "400", description = "Biglietto non valido o già usato")
+            @ApiResponse(responseCode = "200", description = "Biglietto valido e registrato"),
+            @ApiResponse(responseCode = "404", description = "Biglietto non trovato"),
+            @ApiResponse(responseCode = "409", description = "Biglietto già utilizzato")
     })
     @PostMapping("/reception/verify/{ticketId}")
-    public ResponseEntity<String> verifyTicket(@PathVariable UUID ticketId) {
-        // Questa API dovrebbe essere protetta in un'applicazione reale (es. con un token JWT)
-        if (ticketService.validateTicket(ticketId)) {
-            return new ResponseEntity<>("Biglietto valido e usato.", HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Biglietto non valido o già usato.", HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<TicketValidationResponseDTO> verifyTicket(
+            @Parameter(description = "ID del biglietto") @PathVariable UUID ticketId) {
+        
+        log.info("Richiesta verifica biglietto ID: {}", ticketId);
+        
+        TicketValidationResponseDTO response = ticketService.validateTicket(ticketId);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

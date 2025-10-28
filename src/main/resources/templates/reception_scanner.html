@@ -81,6 +81,7 @@
             font-weight: bold;
             padding: 15px;
             border-radius: 8px;
+            display: none;
         }
         .valid-msg {
             background-color: #d4edda;
@@ -91,6 +92,10 @@
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+        .ticket-details {
+            margin-top: 10px;
+            font-size: 0.9em;
         }
         .back-link {
             margin-top: 30px;
@@ -144,37 +149,48 @@
         html5QrCode = new Html5Qrcode("qr-reader");
         const qrCodeSuccessCallback = (decodedText, decodedResult) => {
             console.log(`QR Code scansionato: ${decodedText}`);
-            document.getElementById('qr-reader-results').innerText = 'Scansionato: ' + decodedText + ' - Verifica in corso...';
+            const resultDiv = document.getElementById('qr-reader-results');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result-message';
+            resultDiv.innerHTML = 'Scansionato: ' + decodedText + ' - Verifica in corso...';
 
             // Chiama l'API di backend per verificare il biglietto
-            // Il decodedText è il qrCodeData, che è l'UUID del biglietto
             fetch(`/reception/verify/${decodedText}`, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
             })
             .then(response => {
-                // Controlla se la risposta è un reindirizzamento (status 3xx)
-                if (response.redirected) {
-                    window.location.href = response.url; // Segui il reindirizzamento
-                    return; // Ferma l'esecuzione del .then()
-                }
-                // Se non è un reindirizzamento e non è ok (es. 4xx, 5xx), gestisci l'errore
                 if (!response.ok) {
-                    return response.text().then(text => Promise.reject(text));
+                    return response.json().then(err => Promise.reject(err));
                 }
-                // Questo caso non dovrebbe accadere con il reindirizzamento, ma per sicurezza:
-                return response.text();
+                return response.json();
             })
-            .then(message => {
-                // Questo blocco verrà eseguito solo se non c'è stato un reindirizzamento e la risposta è OK
-                document.getElementById('qr-reader-results').innerHTML = `<span class="valid-msg">${message}</span>`;
+            .then(data => {
+                resultDiv.className = 'result-message valid-msg';
+                resultDiv.innerHTML = `
+                    <strong>✓ Biglietto Valido!</strong><br>
+                    <div class="ticket-details">
+                        <strong>Evento:</strong> ${data.eventName || 'N/A'}<br>
+                        <strong>Partecipante:</strong> ${data.userName || 'N/A'}<br>
+                        <strong>Messaggio:</strong> ${data.message}
+                    </div>
+                `;
+                // Continua la scansione dopo 3 secondi
+                setTimeout(() => {
+                    resultDiv.style.display = 'none';
+                    resultDiv.innerHTML = '';
+                }, 3000);
             })
             .catch(error => {
-                document.getElementById('qr-reader-results').innerHTML = `<span class="invalid-msg">${error}</span>`;
-            })
-            .finally(() => {
-                // Dopo la verifica, puoi scegliere se fermare lo scanner o farlo continuare.
-                // Attualmente, continua a scansionare. Se vuoi fermarlo:
-                html5QrCode.stop().then(ignore => { /* stopped */ }).catch(err => console.error("Error stopping scanner:", err));
+                resultDiv.className = 'result-message invalid-msg';
+                const errorMessage = error.message || error.errors || 'Errore sconosciuto';
+                resultDiv.innerHTML = `<strong>✗ Errore:</strong> ${errorMessage}`;
+                setTimeout(() => {
+                    resultDiv.style.display = 'none';
+                    resultDiv.innerHTML = '';
+                }, 4000);
             });
         };
 
