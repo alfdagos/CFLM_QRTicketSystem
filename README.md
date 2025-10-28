@@ -2,7 +2,7 @@
 
 ## 📋 Descrizione
 
-Sistema di gestione biglietti per eventi CFLM basato su **QR Code**, realizzato con **Java Spring Boot** e **H2 Database** (configurabile per PostgreSQL). Offre funzionalità complete per la generazione, visualizzazione e verifica dei biglietti, rendendolo ideale per eventi, conferenze o qualsiasi scenario che richieda un sistema di ingresso con validazione.
+Sistema di gestione biglietti per eventi gasanti CFLM basato su **QR Code**, realizzato con **Java Spring Boot** e **H2 Database** (configurabile per PostgreSQL). Offre funzionalità complete per la generazione, visualizzazione e verifica dei biglietti, rendendolo ideale per eventi, conferenze o qualsiasi scenario che richieda un sistema di ingresso con validazione.
 
 ## ✨ Caratteristiche Principali
 
