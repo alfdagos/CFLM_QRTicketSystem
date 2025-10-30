@@ -144,8 +144,8 @@
 
 <script th:inline="javascript">
     // Ottieni il token CSRF dal meta tag (inserito da Thymeleaf)
-    const csrfToken = /*[[${_csrf.token}]]*/ '';
-    const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+    const csrfToken = /*[[${_csrf?.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf?.headerName}]]*/ '';
 
     document.getElementById('ticketForm').addEventListener('submit', function(event) {
         event.preventDefault(); // Impedisce l'invio standard del form

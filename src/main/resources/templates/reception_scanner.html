@@ -128,8 +128,8 @@
 
 <script th:inline="javascript">
     // Ottieni il token CSRF dal meta tag (inserito da Thymeleaf)
-    const csrfToken = /*[[${_csrf.token}]]*/ '';
-    const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+    const csrfToken = /*[[${_csrf?.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf?.headerName}]]*/ '';
 
     let html5QrCode;
     let isProcessing = false; // Flag per prevenire scansioni multiple
