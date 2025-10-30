@@ -98,6 +98,51 @@ mvn spring-boot:run
 
 L'applicazione sarà disponibile su `http://localhost:8080`
 
+## 🧑‍💻 Sviluppo — Spring Boot DevTools
+
+Questa repository include `spring-boot-devtools` come dipendenza di sviluppo (scope `runtime`, `optional=true`) per abilitare il riavvio automatico dell'applicazione e funzionalità di live reload durante lo sviluppo.
+
+Come usarlo in locale:
+
+- Avvia l'app usando il wrapper Maven generato nel progetto (consigliato):
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+- Oppure avvia con Maven installato globalmente:
+
+```powershell
+mvn spring-boot:run
+```
+
+Comportamento utile offerto da DevTools:
+
+- Riavvio automatico dell'app al salvataggio delle classi Java o delle risorse (classpath restart).
+- Livereload opzionale del browser (se installi un client LiveReload o estensione browser).
+- Caricamento delle proprietà di sviluppo separate (se presenti).
+
+Proprietà utili (es. in `src/main/resources/application.yml` o `application.properties`):
+
+```properties
+# Disabilita il restart se vuoi (default=true)
+spring.devtools.restart.enabled=true
+
+# Abilita LiveReload server integrato (browser extension necessaria per ricaricare automaticamente)
+spring.devtools.livereload.enabled=true
+
+# Esempio: disabilitare cache template Thymeleaf in sviluppo
+spring.thymeleaf.cache=false
+```
+
+Note importanti:
+
+- DevTools è pensato SOLO per lo sviluppo: rimane in `runtime` e con `optional=true` nel `pom.xml`, quindi non sarà incluso come dipendenza transitiva in ambienti di produzione.
+- Se usi un IDE (IntelliJ/VS Code/Eclipse), salva i file per innescare il riavvio; alcuni IDE richiedono la compilazione automatica abilitata.
+- Se non vuoi che il restart venga eseguito (ad es. durante debug approfondito), puoi disabilitarlo tramite la proprietà `spring.devtools.restart.enabled=false`.
+
+Per ulteriori dettagli vedi la documentazione ufficiale: https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#using-boot-devtools
+
 ## 📚 Utilizzo
 
 ### 🎫 Creazione Biglietto
